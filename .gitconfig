@@ -1,6 +1,9 @@
 [user]
     name = Romel Benavides
     email = romelben@mac.com
+[apply]
+# Detect whitespace errors when applying a patch
+    whitespace = fix
 [core]
     editor = vi
     excludesfile = ~/.gitignore
@@ -10,6 +13,12 @@
     diff = auto
     interactive = auto
     status = auto
+[diff]
+    # Detect copies as well as renames
+    renames = copies
+[help]
+    # Automatically correct and execute mistyped commands
+    autocorrect = 1
 [web]
     browser = brave
 [credential]
@@ -28,3 +37,11 @@
     d = diff
     dc = diff --cached
     l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
+#
+# URL shortcuts
+#
+[url "git@github.com:"]
+
+	pushInsteadOf = "https://github.com/"
+	pushInsteadOf = "github:"
+	pushInsteadOf = "git://github.com/"

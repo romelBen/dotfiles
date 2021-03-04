@@ -37,11 +37,25 @@ if [[ "$RUN_AS_ROOT" = true ]]; then
   sudo pmset -a sleep 0
 fi
 
+# Set sidar icon size to medium
+defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int 2
+
+# Always show scrollbars
+defaults write NSGlobalDomain AppleShowScrollBars -string "Always"
+
+# Adjust toolbar title rollover delay
+defaults write NSGlobalDomain NSToolbarTitleViewRolloverDelay -float 0
+
+# Disable the over-the-top focus ring animation
+defaults write NSGlobalDomain NSUseAnimatedFocusRing -bool false
+
 # Expand save panel by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 
 # Expand print panel by default
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
 # Save to disk (not to iCloud) by default
 defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
@@ -49,33 +63,55 @@ defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
+# Disable Resume system-wide
+defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false
+
+# Disable automatic termination of inactive apps
+defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
+
+# Disable automatic capitalization as it’s annoying when typing code
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
+
+# Disable smart dashes as they’re annoying when typing code
+defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
+
+# Disable automatic period substitution as it’s annoying when typing code
+defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
+
+# Disable smart quotes as they’re annoying when typing code
+defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+
+# Disable auto-correct
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+
 # Reveal IP address, hostname, OS version, etc. when clicking the clock
 # in the login window
 if [[ "$RUN_AS_ROOT" = true ]]; then
   sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
 fi
 
-# Restart automatically if the computer freezes
-if [[ "$RUN_AS_ROOT" = true ]]; then
-  systemsetup -setrestartfreeze on
-fi
+# Disable game center. Who uses that thing?
+launchctl unload /System/Library/LaunchAgents/com.apple.gamed.plist 2> /dev/null
+
+# Set background to dark-grey color
+sqlite3 ~/Library/Application\ Support/Dock/desktoppicture.db "update data set value = '/Library/Desktop Pictures/Solid Colors/Solid Gray Dark.png'"
 
 # Disable Notification Center
 # launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist 2> /dev/null
 # To re-enable, run:
 # launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist && open /System/Library/CoreServices/NotificationCenter.app/
 
-# Disable game center. Who uses that thing?
-launchctl unload /System/Library/LaunchAgents/com.apple.gamed.plist 2> /dev/null
+#############################################################################
+# Energy Savings                                                            #
+#############################################################################
 
-# Disable smart quotes as they’re annoying when typing code
-defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+# Sleep the display after 15 minutes
+sudo pmset -a displaysleep 15
 
-# Disable smart dashes as they’re annoying when typing code
-defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
-
-# Set background to dark-grey color
-sqlite3 ~/Library/Application\ Support/Dock/desktoppicture.db "update data set value = '/Library/Desktop Pictures/Solid Colors/Solid Gray Dark.png'"
+# Restart automatically if the computer freezes
+if [[ "$RUN_AS_ROOT" = true ]]; then
+  systemsetup -setrestartfreeze on
+fi
 
 ###############################################################################
 # SSD-specific tweaks                                                         #
@@ -110,7 +146,7 @@ defaults -currentHost write NSGlobalDomain com.apple.trackpad.trackpadCornerClic
 defaults -currentHost write NSGlobalDomain com.apple.trackpad.enableSecondaryClick -bool true
 
 # Increase sound quality for Bluetooth headphones/headsets
-# defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int 40
+defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int 40
 
 # Enable full keyboard access for all controls
 # (e.g. enable Tab in modal dialogs - 0 = text boxes and lists, 2/3 = all controls)
@@ -119,6 +155,7 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 0
 # Use scroll gesture with the Ctrl (^) modifier key to zoom
 defaults write com.apple.universalaccess closeViewScrollWheelToggle -bool true
 defaults write com.apple.universalaccess HIDScrollZoomModifierMask -int 262144
+
 # Follow the keyboard focus while zoomed in
 defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
 
@@ -131,6 +168,14 @@ defaults write NSGlobalDomain KeyRepeat -int 1
 
 # Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+
+# Set language and text formats
+# Note: if you’re in the US, replace `EUR` with `USD`, `Centimeters` with
+# `Inches`, `en_GB` with `en_US`, and `true` with `false`.
+defaults write NSGlobalDomain AppleLanguages -array "en" "nl"
+defaults write NSGlobalDomain AppleLocale -string "en_US@currency=USD"
+defaults write NSGlobalDomain AppleMeasurementUnits -string "Inches"
+defaults write NSGlobalDomain AppleMetricUnits -bool false
 
 ###############################################################################
 # Screen                                                                      #
@@ -376,7 +421,56 @@ fi
 # Only use UTF-8 in Terminal.app
 defaults write com.apple.terminal StringEncodings -array 4
 
-# For Terminal theme, see: https://github.com/geerlingguy/mac-dev-playbook
+# Use a modified version of the Solarized Dark theme by default in Terminal.app
+osascript <<EOD
+  tell application "Terminal"
+
+    local allOpenedWindows
+    local initialOpenedWindows
+    local windowID
+    set themeName to "Solarized Dark xterm-256color"
+
+    (* Store the IDs of all the open terminal windows. *)
+    set initialOpenedWindows to id of every window
+
+    (* Open the custom theme so that it gets added to the list
+      of available terminal themes (note: this will open two
+      additional terminal windows). *)
+    do shell script "open '$HOME/init/" & themeName & ".terminal'"
+
+    (* Wait a little bit to ensure that the custom theme is added. *)
+    delay 1
+
+    (* Set the custom theme as the default terminal theme. *)
+    set default settings to settings set themeName
+
+    (* Get the IDs of all the currently opened terminal windows. *)
+    set allOpenedWindows to id of every window
+    repeat with windowID in allOpenedWindows
+
+      (* Close the additional windows that were opened in order
+        to add the custom theme to the list of terminal themes. *)
+      if initialOpenedWindows does not contain windowID then
+        close (every window whose id is windowID)
+
+      (* Change the theme for the initial opened terminal windows
+        to remove the need to close them in order for the custom
+        theme to be applied. *)
+      else
+        set current settings of tabs of (every window whose id is windowID) to settings set themeName
+      end if
+    end repeat
+  end tell
+EOD
+
+# Disable the annoying line marks
+defaults write com.apple.Terminal ShowLineMarks -int 0
+
+# Install the Solarized Dark theme for iTerm
+open "${HOME}/init/Solarized Dark.itermcolors"
+
+# Don’t display the annoying prompt when quitting iTerm
+defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
 ###############################################################################
 # Activity Monitor                                                            #
@@ -390,6 +484,10 @@ defaults write com.apple.ActivityMonitor IconType -int 5
 
 # Show all processes in Activity Monitor
 defaults write com.apple.ActivityMonitor ShowCategory -int 0
+
+# Sort Activity Monitor results by CPU usage
+defaults write com.apple.ActivityMonitor SortColumn -string "CPUUsage"
+defaults write com.apple.ActivityMonitor SortDirection -int 0
 
 ###############################################################################
 # TextEdit                                                                    #
@@ -414,16 +512,6 @@ defaults write com.apple.messageshelper.MessageController SOInputLineSettings -d
 
 # Disable continuous spell checking
 defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "continuousSpellCheckingEnabled" -bool false
-
-###############################################################################
-# Google Chrome                                                               #
-###############################################################################
-
-# Disable sensitive and senseless swipe-based navigation
-defaults write com.google.Chrome AppleEnableSwipeNavigateWithScrolls -bool false
-
-# Use the system print dialog
-defaults write com.google.Chrome DisablePrintPreview -bool true
 
 ###############################################################################
 # Kill/restart affected applications                                          #

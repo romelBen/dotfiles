@@ -16,6 +16,9 @@ export PS1=$'\n'"%F{green} %*%F %3~ %F{white}$ "
 # Enable plugins.
 plugins=(git brew history kubectl history-substring-search)
 
+# Path to your oh-my-zsh installation
+ZSH=$HOME/.oh-my-zsh
+
 # Custom $PATH with extra locations.
 export PATH=/usr/local/bin:/usr/local/sbin:$HOME/bin:$HOME/go/bin:/usr/local/git/bin:$HOME/.composer/vendor/bin:$PATH
 
