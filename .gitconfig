@@ -4,10 +4,27 @@
 [apply]
 # Detect whitespace errors when applying a patch
     whitespace = fix
+#[commit]
+    # https://help.github.com/articles/signing-commits-using-gpg/
+#    gpgsign = true
 [core]
     editor = vi
     excludesfile = ~/.gitignore
     autocrlf = input
+
+    # Trest spaces before tabs and all kinds of trailing whitespace as an error
+    whitespace = space-before-tab, -indent-with-non-tab, trailing-space
+
+    # Make `git rebase` safer on macOS.
+	# More info: <http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/>
+	trustctime = false
+
+    # Speed up commands involving untracked files such as `git status`.
+	# https://git-scm.com/docs/git-update-index#_untracked_cache
+	untrackedCache = true
+[branch]
+    # Show most recently changed branches first
+    sort = -committerdate
 [color]
     branch = auto
     diff = auto
