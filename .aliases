@@ -1,0 +1,48 @@
+# ls
+alias l='ls -Flh'
+alias ll='ls -Flha'
+
+# git
+alias g='git'
+alias gs='git status --short'
+alias gS='git status'
+alias gd='git diff'
+alias gD='git diff --staged'
+alias ga='git add'
+alias gA='git add --update'
+alias gc='git commit'
+alias gco='git checkout'
+alias gcob='git checkout -b'
+alias gcom='git checkout master'
+alias gp='git push'
+alias gl='git log --decorate --oneline --graph'
+alias gL='git log -p --shortstat'
+alias gt='git ls-tree -r "$(git rev-parse --abbrev-ref HEAD)" --name-only | tree --fromfile'
+
+# tmux
+alias t='tmux'
+alias ta='tmux attach'
+
+# less
+alias less='less --RAW-CONTROL-CHARS'
+
+# diff
+alias diff='git diff --no-index'
+
+# nvim
+alias v='nvim'
+
+# convert to PDF
+alias officetopdf='libreoffice --headless --convert-to pdf'
+
+# calculator
+alias calc='python -i -c "from math import *"'
+
+# get GPLv3
+alias gplv3='curl "https://www.gnu.org/licenses/gpl-3.0.md" > LICENSE.md'
+
+# kubectl
+alias kc='kubectx'
+
+# nix
+alias ns='nix-shell --log-format bar --command "${SHELL}" --packages'
